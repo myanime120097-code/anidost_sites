@@ -1,6 +1,6 @@
 /* ============================================================
    details.js — Pure render logic for detail page
-   Supports both /details.html?slug=xyz AND /details/xyz
+   Loader থেকে কল হবে: window.renderDetailPage(list)
 ============================================================ */
 
 var _eps = [];
@@ -105,23 +105,11 @@ var SVG = {
 };
 
 /* ============================================================
-   URL HELPERS — Supports BOTH formats
-   Format 1: /details.html?slug=naruto
-   Format 2: /details/naruto
+   URL HELPERS
 ============================================================ */
 function getSlugFromURL() {
-  // Format 1: query string
   var params = new URLSearchParams(window.location.search);
-  var slug = params.get("slug") || params.get("id") || "";
-  if (slug) return slug;
-
-  // Format 2: path (/details/naruto)
-  var parts = window.location.pathname.split('/').filter(Boolean);
-  if (parts[0] === 'details' && parts[1]) {
-    return decodeURIComponent(parts[1]);
-  }
-
-  return "";
+  return params.get("slug") || params.get("id") || "";
 }
 
 /* ============================================================
@@ -190,7 +178,7 @@ function renderDetail(a) {
   if (genres.length) {
     html += '<div class="d-genres">';
     for (var g = 0; g < genres.length; g++) {
-      html += '<a class="d-genre" href="anime/genre/' + encodeURIComponent(genres[g]) + '">'
+      html += '<a class="d-genre" href="anime.html?genre=' + encodeURIComponent(genres[g]) + '">'
         + esc(genres[g]) + '</a>';
     }
     html += '</div>';
@@ -355,6 +343,7 @@ function renderEpPage(page) {
       ? '<img src="' + esc(banner) + '" alt="" loading="lazy">'
       : '<div class="ep-thumb-ph">' + SVG.film + '</div>';
 
+    /* ✅ episode.html বাদ — সরাসরি modal খুলবে */
     html += '<div class="ep-row" onclick="openDownloadModal(\'' + esc(animeSlug) + '\', \'' + esc(epNum) + '\')" data-anime-id="' + esc(animeSlug) + '">';
     html += '<div class="ep-thumb">';
     html += thumbHtml;
@@ -405,7 +394,7 @@ function goBack() {
   if (document.referrer && document.referrer.indexOf(location.host) !== -1) {
     history.back();
   } else {
-    location.href = "/";
+    location.href = "index.html";
   }
 }
 
@@ -453,6 +442,7 @@ function openDownloadModal(animeSlug, epNum) {
   var anime = _anime;
   if (!anime) return;
 
+  /* ওই episode-এর download_links বের করুন */
   var eps = anime.episodes_list || [];
   var ep = eps.find(function (e) {
     return String(e.number) === String(epNum);
@@ -460,6 +450,7 @@ function openDownloadModal(animeSlug, epNum) {
 
   var links = (ep && ep.download_links) ? ep.download_links : [];
 
+  /* quality অনুযায়ী সাজান */
   var qualities = ["1080p", "720p", "480p"];
   var linksHtml = "";
 
@@ -495,6 +486,7 @@ function openDownloadModal(animeSlug, epNum) {
       '</div>' +
     '</div>';
 
+  /* পুরোনো modal থাকলে সরান */
   var old = document.getElementById("dlModalOverlay");
   if (old) old.remove();
 
@@ -543,7 +535,7 @@ function showNotSelected() {
     '<div style="text-align:center;padding:80px 20px;color:rgba(237,231,218,0.4)">'
     + '<h2 style="font-family:\'Bebas Neue\',sans-serif;font-size:1.75rem;color:var(--paper);margin-bottom:12px">No Anime Selected</h2>'
     + '<p style="margin-bottom:24px">Please select an anime from the home page.</p>'
-    + '<a href="/" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
+    + '<a href="index.html" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
     + '</div>';
   hideLoading();
 }
@@ -554,7 +546,7 @@ function showNotFound() {
     '<div style="text-align:center;padding:80px 20px;color:rgba(237,231,218,0.4)">'
     + '<h2 style="font-family:\'Bebas Neue\',sans-serif;font-size:1.75rem;color:var(--paper);margin-bottom:12px">Anime Not Found</h2>'
     + '<p style="margin-bottom:24px">The anime you are looking for does not exist.</p>'
-    + '<a href="/" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
+    + '<a href="index.html" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
     + '</div>';
   hideLoading();
 }
