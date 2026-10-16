@@ -1,0 +1,13 @@
+{
+  "name": "Ani Dost — Watch Anime Online",
+  "short_name": "Ani Dost",
+  "description": "Watch and download anime series and movies in HD",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121114",
+  "theme_color": "#C8342A",
+  "icons": [
+    { "src": "favicon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "favicon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
