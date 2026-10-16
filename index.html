@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Ani Dost — Your Anime Buddy</title>
+<link rel="icon" type="image/png" href="favicon.png" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loadingScreen">
+  <div class="load-logo">ANI<span>DOST</span></div>
+  <div class="load-bar"><div class="load-bar-fill"></div></div>
+  <div class="load-error" id="loadError" style="display:none"></div>
+</div>
+
+<!-- Top Header -->
+<header class="top-header">
+  <a href="index.html" class="brand">
+    <img src="favicon.png" alt="Ani Dost" class="brand-logo" />
+    <span class="brand-name">ANI<span class="dot"></span>DOST</span>
+  </a>
+  <nav class="top-nav">
+    <a href="index.html" class="active">Home</a>
+    <a href="anime.html?type=series">Series</a>
+    <a href="anime.html?type=movies">Movies</a>
+  </nav>
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+</header>
+
+<!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <h3>ANI DOST</h3>
+    <button class="sidebar-close" onclick="closeSidebar()" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="index.html" class="active">Home</a>
+    <a href="anime.html?type=series">Series</a>
+    <a href="anime.html?type=movies">Movies</a>
+    <a href="anime.html?type=save">Saved</a>
+    <a href="anime.html?type=history">History</a>
+  </nav>
+  <div class="sidebar-footer">© 2026 Ani Dost</div>
+</aside>
+
+<!-- Hero -->
+<section class="hero" id="heroSlider">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-inner" id="heroInner"></div>
+</section>
+
+<!-- Search -->
+<div class="search-section">
+  <div class="search-box">
+    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" id="liveSearchInput" placeholder="Search for anime, movies, series..." autocomplete="off" spellcheck="false" />
+    <button type="button" class="search-clear" id="searchClear" aria-label="Clear">✕</button>
+  </div>
+  <div class="search-live-results" id="liveResults">
+    <div class="search-loading" id="searchLoading"><span class="spinner"></span> Searching...</div>
+    <div id="liveResultsList"></div>
+  </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-wrap" id="filterWrap">
+  <a href="index.html" class="pill active" data-type="all">All <span id="countAll">0</span></a>
+  <a href="anime.html?type=series" class="pill" data-type="series">Series <span id="countSeries">0</span></a>
+  <a href="anime.html?type=movies" class="pill" data-type="movies">Movie <span id="countMovies">0</span></a>
+  <span id="genrePillsContainer" style="display:contents;"></span>
+</div>
+
+<!-- Main Content -->
+<div id="mainContent">
+  <section class="row" id="seriesRecentRow" style="display:none">
+    <div class="row-head">
+      <h2>Series · Recent</h2>
+      <a href="anime.html?type=series" class="see-all">See All →</a>
+    </div>
+    <div class="row-scroll"><div class="card-track" id="seriesTrack"></div></div>
+  </section>
+
+  <section class="row" id="moviesRecentRow" style="display:none">
+    <div class="row-head">
+      <h2>Movies · Recent</h2>
+      <a href="anime.html?type=movies" class="see-all">See All →</a>
+    </div>
+    <div class="row-scroll"><div class="card-track" id="moviesTrack"></div></div>
+  </section>
+
+  <section class="row" id="savedRow" style="display:none">
+    <div class="row-head">
+      <h2>Saved</h2>
+      <a href="anime.html?type=save" class="see-all">See All →</a>
+    </div>
+    <div class="row-scroll"><div class="card-track" id="savedTrack"></div></div>
+  </section>
+
+  <section class="row" id="watchHistoryRow" style="display:none">
+    <div class="row-head">
+      <h2>Watch History</h2>
+      <a href="anime.html?type=history" class="see-all">See All →</a>
+    </div>
+    <div class="row-scroll"><div class="card-track" id="watchHistoryTrack"></div></div>
+  </section>
+
+  <div class="empty-state" id="emptyState" style="display:none">
+    <span class="icon">—</span>
+    <p style="font-size:1rem;font-weight:600;color:rgba(237,231,218,0.5);margin-bottom:8px;">No anime found</p>
+    <p style="font-size:0.875rem;color:rgba(237,231,218,0.25);">Run admin.php → Save All to generate anime bundle</p>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <a class="bnav-item active" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </a>
+  <a class="bnav-item" href="anime.html?type=series">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+    Series
+  </a>
+  <a class="bnav-item" href="anime.html?type=movies">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    Movies
+  </a>
+  <a class="bnav-item" href="anime.html?type=save">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    Saved
+  </a>
+  <a class="bnav-item" href="anime.html?type=history">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    History
+  </a>
+</nav>
+
+<script>
+/* ============================================================
+   loader.js — Persistent loader with localStorage cache
+   একবার load হলে আর Worker-এ request পাঠাবে না
+============================================================ */
+
+(function () {
+  'use strict';
+
+  /* ============================================================
+     CONFIG
+     ============================================================ */
+  var WORKER_URL = 'https://anidost-drive.animedost.workers.dev';
+  var CACHE_KEY = 'aniDostAnimeCache_v1';
+  var CACHE_META_KEY = 'aniDostAnimeCacheMeta_v1';
+
+  /* ============================================================
+     DETECT PAGE
+     ============================================================ */
+  var path = window.location.pathname.toLowerCase();
+  var isHome    = /(^|\/)index\.html$/.test(path) || path === '/' || path.endsWith('/');
+  var isAnime   = /anime\.html$/.test(path);
+  var isDetails = /details\.html$/.test(path);
+
+  /* ============================================================
+     LOCALSTORAGE CACHE HELPERS
+     ============================================================ */
+  function readCache() {
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return null;
+      if (arr.length === 0) return null;
+      return arr;
+    } catch (e) {
+      console.warn('[loader] Cache read error:', e.message);
+      return null;
+    }
+  }
+
+  function writeCache(data) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      localStorage.setItem(CACHE_META_KEY, JSON.stringify({
+        savedAt: Date.now(),
+        count: data.length
+      }));
+      console.log('[loader] Cached', data.length, 'anime to localStorage');
+    } catch (e) {
+      console.warn('[loader] Cache write error (quota?):', e.message);
+    }
+  }
+
+  function clearCache() {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(CACHE_META_KEY);
+      console.log('[loader] Cache cleared');
+    } catch (e) {}
+  }
+
+  function getCacheMeta() {
+    try {
+      var raw = localStorage.getItem(CACHE_META_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  /* ============================================================
+     SCRIPT LOADER
+     ============================================================ */
+  function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.async = false;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error('Failed to load ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* ============================================================
+     FETCH FROM WORKER (only if no cache)
+     ============================================================ */
+  async function fetchFromWorker() {
+    console.log('[loader] Fetching from Worker:', WORKER_URL);
+
+    // 1) Get list of files
+    var listRes = await fetch(WORKER_URL + '/list-public');
+    if (!listRes.ok) throw new Error('List fetch failed: HTTP ' + listRes.status);
+
+    var listData = await listRes.json();
+    var files = (listData && listData.files) || [];
+
+    if (!files.length) {
+      console.log('[loader] KV empty — no anime');
+      return [];
+    }
+
+    console.log('[loader] Found', files.length, 'batch files');
+
+    // 2) Load each batch as <script>
+    for (var i = 0; i < files.length; i++) {
+      var src = WORKER_URL + '/js/' + files[i].name;
+      try {
+        await loadScript(src);
+        console.log('[loader] Loaded', files[i].name);
+      } catch (e) {
+        console.warn('[loader] Batch failed:', files[i].name, e.message);
+      }
+    }
+
+    // 3) Collect all ANIME_BATCH_* arrays
+    var all = [];
+    Object.keys(window).forEach(function (k) {
+      if (/^ANIME_BATCH_\d+$/.test(k) && Array.isArray(window[k])) {
+        all = all.concat(window[k]);
+      }
+    });
+
+    // 4) Clean up global vars (optional)
+    Object.keys(window).forEach(function (k) {
+      if (/^ANIME_BATCH_\d+$/.test(k)) {
+        try { delete window[k]; } catch (e) { window[k] = undefined; }
+      }
+    });
+
+    console.log('[loader] Collected', all.length, 'anime from Worker');
+    return all;
+  }
+
+  /* ============================================================
+     MAIN LOADER
+     ============================================================ */
+  async function loadAnime(forceRefresh) {
+    // 1) If forceRefresh → skip cache
+    if (!forceRefresh) {
+      var cached = readCache();
+      if (cached && cached.length > 0) {
+        var meta = getCacheMeta();
+        console.log('[loader] ✅ Using LOCAL cache —', cached.length, 'anime',
+                    meta ? '(saved ' + new Date(meta.savedAt).toLocaleString() + ')' : '');
+        return cached;
+      }
+    }
+
+    // 2) No cache → fetch from Worker
+    console.log('[loader] No cache — fetching from Worker...');
+    var data = await fetchFromWorker();
+
+    // 3) Save to localStorage
+    if (data.length > 0) {
+      writeCache(data);
+    }
+
+    return data;
+  }
+
+  /* ============================================================
+     RENDER DISPATCH
+============================================================ */
+  function dispatch(list) {
+    if (isHome && typeof window.renderHome === 'function') {
+      window.renderHome(list);
+      return true;
+    }
+    if (isAnime && typeof window.renderAnimePage === 'function') {
+      window.renderAnimePage(list);
+      return true;
+    }
+    if (isDetails && typeof window.renderDetailPage === 'function') {
+      window.renderDetailPage(list);
+      return true;
+    }
+    return false;
+  }
+
+  function hideLoading() {
+    var s = document.getElementById('loadingScreen');
+    if (s) {
+      s.classList.add('fade');
+      setTimeout(function () { s.hidden = true; }, 550);
+    }
+  }
+
+  /* ============================================================
+     ERROR UI
+============================================================ */
+  function showError(msg) {
+    hideLoading();
+
+    var errEl = document.getElementById('loadError');
+    if (errEl) {
+      errEl.style.display = 'block';
+      errEl.textContent = '⚠️ ' + msg;
+      return;
+    }
+
+    var banner = document.createElement('div');
+    banner.style.cssText =
+      'position:fixed;top:0;left:0;right:0;background:#c0392b;color:#fff;' +
+      'padding:12px 16px;text-align:center;font-size:14px;z-index:99999;' +
+      'font-weight:600;box-shadow:0 2px 12px rgba(0,0,0,0.3);';
+    banner.textContent = '⚠️ ' + msg;
+    document.body.appendChild(banner);
+  }
+
+  /* ============================================================
+     BOOT
+============================================================ */
+  async function boot() {
+    try {
+      // ✅ URL এ "?refresh=1" থাকলে cache bypass
+      var forceRefresh = window.location.search.indexOf('refresh=1') !== -1;
+      if (forceRefresh) {
+        console.log('[loader] Force refresh requested via URL');
+        clearCache();
+      }
+
+      var list = await loadAnime(forceRefresh);
+
+      if (!list || list.length === 0) {
+        console.log('[loader] No anime data');
+        var handled = dispatch([]);
+        if (!handled) hideLoading();
+        return;
+      }
+
+      var handled = dispatch(list);
+      if (!handled) {
+        console.warn('[loader] No render function found for this page');
+        hideLoading();
+      }
+    } catch (e) {
+      console.error('[loader] Fatal error:', e);
+      showError('Failed to load anime data. Tap to retry.');
+    }
+  }
+
+  /* ============================================================
+     RUN
+============================================================ */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+  /* ============================================================
+     GLOBAL API — Manual control
+============================================================ */
+  window.AniDostLoader = {
+    /** Cache থেকে data আনুন (Worker-এ request যাবে না) */
+    getCached: function () { return readCache() || []; },
+
+    /** Cache meta info */
+    meta: function () { return getCacheMeta(); },
+
+    /** Fresh data আনুন Worker থেকে (cache replace হবে) */
+    refresh: async function () {
+      clearCache();
+      var data = await loadAnime(true);
+      return data;
+    },
+
+    /** শুধু cache মুছুন */
+    clear: clearCache,
+
+    /** Cache-এর size (bytes) */
+    cacheSize: function () {
+      try {
+        var raw = localStorage.getItem(CACHE_KEY) || '';
+        return raw.length;
+      } catch (e) { return 0; }
+    }
+  };
+
+  console.log('[loader] Ready. Use AniDostLoader for manual control.');
+
+})();
+</script>
+<script src="home.js"></script>
+
+</body>
+</html>
