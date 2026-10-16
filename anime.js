@@ -1,6 +1,5 @@
 /* ============================================================
-   anime.js — Pure render logic for browse page
-   Loader থেকে কল হবে: window.renderAnimePage(list)
+   anime.js — Browse page render with clean URLs
 ============================================================ */
 
 var allAnime = [];
@@ -9,17 +8,25 @@ var displayedCount = 0;
 var ITEMS_PER_PAGE = 30;
 
 var urlParams = new URLSearchParams(window.location.search);
+var pathParts = window.location.pathname.split('/').filter(Boolean);
+
 var filterType = urlParams.get('type') || 'all';
 var filterGenre = urlParams.get('genre') || '';
 var searchQuery = urlParams.get('q') || '';
 var sortBy = urlParams.get('sort') || 'latest';
 
+// Path detect: /anime/series অথবা /anime
+if (pathParts[0] === 'anime' && pathParts[1]) {
+  if (pathParts[1] === 'genre' && pathParts[2]) {
+    filterGenre = decodeURIComponent(pathParts[2]);
+  } else if (pathParts[1] !== 'all') {
+    filterType = pathParts[1];
+  }
+}
+
 var SAVED_KEY = 'aniDostSaved';
 var HISTORY_KEY = 'aniDostHistory';
 
-/* ============================================================
-   UTILS
-============================================================ */
 function escapeHtml(str) {
   return String(str == null ? '' : str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -41,9 +48,6 @@ function getEpisodeDisplay(anime) {
   return 'E' + String(episodes.length).padStart(2, '0');
 }
 
-/* ============================================================
-   MAP BUNDLE
-============================================================ */
 function mapBundleAnime(v) {
   if (!v || !v.title) return null;
   var episodesList = Array.isArray(v.episodes_list) ? v.episodes_list : [];
@@ -95,9 +99,6 @@ function mapBundleAnime(v) {
   };
 }
 
-/* ============================================================
-   LOCALSTORAGE
-============================================================ */
 function readSaved() {
   try {
     var raw = localStorage.getItem(SAVED_KEY);
@@ -138,9 +139,28 @@ function recordHistoryClick(animeId) {
 }
 window.recordHistoryClick = recordHistoryClick;
 
-/* ============================================================
-   BUILD CARD
-============================================================ */
+/* ⭐ Clean URL helper — /anime/series দেখাবে কিন্তু /anime serve হবে */
+function updateCleanUrl(type, genre) {
+  var newPath = '/anime';
+  if (genre) {
+    newPath = '/anime/genre/' + encodeURIComponent(genre);
+  } else if (type && type !== 'all') {
+    newPath = '/anime/' + type;
+  }
+  
+  // Query parameters (sort, q) রাখুন
+  var params = new URLSearchParams(window.location.search);
+  var queryString = params.toString();
+  var fullUrl = newPath + (queryString ? '?' + queryString : '');
+  
+  // URL পরিবর্তন — page reload না করে
+  try {
+    history.pushState({ type: type, genre: genre }, '', fullUrl);
+  } catch (e) {
+    console.warn('[clean-url] pushState failed:', e);
+  }
+}
+
 function buildCard(anime, progress, index) {
   var poster = escapeHtml(posterOrPlaceholder(anime.poster));
   var epDisplay = getEpisodeDisplay(anime);
@@ -151,7 +171,8 @@ function buildCard(anime, progress, index) {
   var saved = isSaved(anime.id);
 
   var a = document.createElement('a');
-  a.href = 'details.html?slug=' + encodeURIComponent(anime.id);
+  // ⭐ Details URL — clean format
+  a.href = '/details?slug=' + encodeURIComponent(anime.id);
   a.className = 'card';
   a.dataset.animeId = anime.id;
   if (typeof index === 'number') {
@@ -174,9 +195,6 @@ function buildCard(anime, progress, index) {
   return a;
 }
 
-/* ============================================================
-   GENRE COUNT MAP
-============================================================ */
 function buildGenreMap() {
   var map = {};
   allAnime.forEach(function (a) {
@@ -190,9 +208,6 @@ function buildGenreMap() {
   return map;
 }
 
-/* ============================================================
-   APPLY FILTERS + SORT
-============================================================ */
 function applyFilters() {
   var list = allAnime.slice();
 
@@ -241,9 +256,6 @@ function applyFilters() {
   filteredAnime = list;
 }
 
-/* ============================================================
-   RENDER
-============================================================ */
 function renderGrid(reset) {
   var grid = document.getElementById('browseGrid');
   if (!grid) return;
@@ -261,7 +273,7 @@ function renderGrid(reset) {
         '</div>' +
         '<h3>No results</h3>' +
         '<p>Try adjusting your filters, changing the sort order, or searching for something else.</p>' +
-        '<a class="reset-btn" href="anime.html">' +
+        '<a class="reset-btn" href="/anime">' +
           '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>' +
           'Reset Filters' +
         '</a>' +
@@ -323,9 +335,6 @@ function updateCountLabel() {
   }
 }
 
-/* ============================================================
-   GENRE DROPDOWN
-============================================================ */
 function renderGenreMenu() {
   var menu = document.getElementById('genreDdMenu');
   if (!menu) return;
@@ -388,19 +397,52 @@ function wireGenreDropdown() {
   });
 }
 
-/* ============================================================
-   SET FILTER
-============================================================ */
+/* ⭐ Filter change — URL update করে, page reload না */
 function setFilter(key, value) {
+  // Genre filter
+  if (key === 'genre') {
+    filterGenre = value || '';
+    filterType = 'all';
+    updateCleanUrl('all', filterGenre);
+    applyFilters();
+    renderGrid(true);
+    renderGenreMenu();
+    updatePageHeader();
+    closeGenreDd();
+    return;
+  }
+
+  // Type filter
+  if (key === 'type') {
+    filterType = value || 'all';
+    filterGenre = '';
+    updateCleanUrl(filterType, '');
+    applyFilters();
+    renderGrid(true);
+    renderGenreMenu();
+    updatePageHeader();
+    return;
+  }
+
+  // Sort, search — query string-এ রাখবো
   var params = new URLSearchParams(window.location.search);
   if (value) params.set(key, value);
   else params.delete(key);
-  window.location.href = 'anime.html?' + params.toString();
+  
+  if (key === 'sort') sortBy = value || 'latest';
+  if (key === 'q') searchQuery = value || '';
+  
+  var basePath = '/anime';
+  if (filterGenre) basePath = '/anime/genre/' + encodeURIComponent(filterGenre);
+  else if (filterType && filterType !== 'all') basePath = '/anime/' + filterType;
+  
+  var queryString = params.toString();
+  history.pushState({}, '', basePath + (queryString ? '?' + queryString : ''));
+  
+  applyFilters();
+  renderGrid(true);
 }
 
-/* ============================================================
-   ACTIVE FILTER CHIPS
-============================================================ */
 function renderActiveFilters() {
   var wrap = document.getElementById('activeFilters');
   if (!wrap) return;
@@ -411,7 +453,7 @@ function renderActiveFilters() {
                    : filterType === 'movies' ? 'Movies'
                    : filterType === 'save' ? 'Saved'
                    : filterType === 'history' ? 'History' : filterType;
-    chips.push({ label: typeLabel, action: function () { setFilter('type', ''); } });
+    chips.push({ label: typeLabel, action: function () { setFilter('type', 'all'); } });
   }
   if (filterGenre) {
     chips.push({ label: filterGenre, action: function () { setFilter('genre', ''); } });
@@ -439,9 +481,6 @@ function renderActiveFilters() {
   });
 }
 
-/* ============================================================
-   SIDEBAR
-============================================================ */
 function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebarOverlay');
@@ -459,9 +498,6 @@ function closeSidebar() {
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
 
-/* ============================================================
-   EVENT HANDLERS
-============================================================ */
 function wireEventHandlers() {
   var clearHistoryBtn = document.getElementById('clearHistoryBtn');
   if (clearHistoryBtn) {
@@ -496,6 +532,15 @@ function wireEventHandlers() {
     if (id) recordHistoryClick(id);
   }, true);
 
+  // ⭐ Tabs — click এ clean URL ব্যবহার
+  document.querySelectorAll('.browse-tab').forEach(function (tab) {
+    tab.addEventListener('click', function (e) {
+      e.preventDefault();
+      var type = this.dataset.type;
+      setFilter('type', type);
+    });
+  });
+
   var sortSelect = document.getElementById('sortSelect');
   if (sortSelect) {
     sortSelect.value = sortBy;
@@ -512,9 +557,6 @@ function wireEventHandlers() {
   }
 }
 
-/* ============================================================
-   PAGE TITLE / HEADER
-============================================================ */
 function updatePageHeader() {
   var title = document.getElementById('browseTitle');
   var eyebrow = document.getElementById('heroEyebrow');
@@ -544,11 +586,14 @@ function updatePageHeader() {
       lede.innerHTML = 'The complete <strong>Ani Dost</strong> library. Filter by type, genre, or sort order to find your next watch.';
     }
   }
+
+  var tabs = document.querySelectorAll('.browse-tab');
+  tabs.forEach(function (tab) {
+    var t = tab.dataset.type;
+    tab.classList.toggle('active', t === filterType);
+  });
 }
 
-/* ============================================================
-   HIDE LOADING
-============================================================ */
 function hideLoading() {
   var s = document.getElementById('loadingScreen');
   if (s) {
@@ -557,9 +602,6 @@ function hideLoading() {
   }
 }
 
-/* ============================================================
-   ✅ MAIN RENDER FUNCTION
-============================================================ */
 function renderAnimePage(rawList) {
   try {
     allAnime = (rawList || [])
@@ -589,7 +631,13 @@ function renderAnimePage(rawList) {
 
 window.renderAnimePage = renderAnimePage;
 
-/* ✅ Loader না থাকলেও ২ সেকেন্ড পরে hide loading */
+// ⭐ Browser back/forward এর জন্য
+window.addEventListener('popstate', function () {
+  if (typeof window.renderAnimePage === 'function' && allAnime.length > 0) {
+    window.location.reload();
+  }
+});
+
 setTimeout(function () {
   if (allAnime.length === 0) {
     hideLoading();
