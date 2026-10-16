@@ -1,6 +1,5 @@
 /* ============================================================
    details.js — Pure render logic for detail page
-   Loader থেকে কল হবে: window.renderDetailPage(list)
 ============================================================ */
 
 var _eps = [];
@@ -11,9 +10,6 @@ var SAVED_KEY = 'aniDostSaved';
 var HISTORY_KEY = 'aniDostHistory';
 var SITE_NAME = 'AniDost';
 
-/* ============================================================
-   UTILS
-============================================================ */
 function esc(s) {
   return String(s == null ? "" : s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -55,9 +51,6 @@ function normalizeTrailerUrl(url) {
   return u;
 }
 
-/* ============================================================
-   SAVED / HISTORY
-============================================================ */
 function readSaved() {
   try {
     var raw = localStorage.getItem(SAVED_KEY);
@@ -104,17 +97,11 @@ var SVG = {
   save:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
 };
 
-/* ============================================================
-   URL HELPERS
-============================================================ */
 function getSlugFromURL() {
   var params = new URLSearchParams(window.location.search);
   return params.get("slug") || params.get("id") || "";
 }
 
-/* ============================================================
-   FIND ANIME BY SLUG
-============================================================ */
 function findAnimeBySlug(rawList, slug) {
   if (!slug) return null;
   for (var i = 0; i < rawList.length; i++) {
@@ -126,9 +113,6 @@ function findAnimeBySlug(rawList, slug) {
   return null;
 }
 
-/* ============================================================
-   RENDER DETAIL
-============================================================ */
 function renderDetail(a) {
   _anime = a;
   var el = document.getElementById("detailContent");
@@ -150,7 +134,6 @@ function renderDetail(a) {
 
   html += '<div class="d-body">';
 
-  /* Top (poster + info) */
   html += '<div class="d-top">';
   html += '<div class="d-poster">';
   var initial = ((a.title || "?")[0] || "?").toUpperCase();
@@ -178,7 +161,8 @@ function renderDetail(a) {
   if (genres.length) {
     html += '<div class="d-genres">';
     for (var g = 0; g < genres.length; g++) {
-      html += '<a class="d-genre" href="anime.html?genre=' + encodeURIComponent(genres[g]) + '">'
+      // ✅ .html সরানো হয়েছে
+      html += '<a class="d-genre" href="anime?genre=' + encodeURIComponent(genres[g]) + '">'
         + esc(genres[g]) + '</a>';
     }
     html += '</div>';
@@ -187,7 +171,6 @@ function renderDetail(a) {
   html += '</div>';
   html += '</div>';
 
-  /* Action buttons */
   var saved = isSaved(a.slug || a.id);
   html += '<div class="d-actions">';
   if (!mov) {
@@ -204,7 +187,6 @@ function renderDetail(a) {
     + '</button>';
   html += '</div>';
 
-  /* Info tiles */
   var qualityText = '480p · 720p · 1080p';
   var audioText = a.audio || 'Hindi';
 
@@ -229,7 +211,6 @@ function renderDetail(a) {
     html += '</div>';
   }
 
-  /* Synopsis */
   if (a.synopsis) {
     html += '<div class="d-section">'
       + '<div class="d-section-title">Synopsis</div>'
@@ -238,7 +219,6 @@ function renderDetail(a) {
       + '</div>';
   }
 
-  /* Trailer */
   if (a.trailer_embed) {
     var trailerSrc = normalizeTrailerUrl(a.trailer_embed);
     html += '<div class="d-section" id="trailerSection">'
@@ -250,7 +230,6 @@ function renderDetail(a) {
       + '</div></div>';
   }
 
-  /* Characters */
   var chars = (a.characters || []).filter(function (c) { return c && c.name; });
   if (chars.length) {
     html += '<div class="d-section">'
@@ -274,7 +253,6 @@ function renderDetail(a) {
     html += '</div></div>';
   }
 
-  /* Episodes */
   var eps = (a.episodes_list || []).slice().sort(function (x, y) {
     return String(x.number || "").localeCompare(String(y.number || ""), undefined, { numeric: true });
   });
@@ -313,9 +291,6 @@ function renderDetail(a) {
   wireSaveButton();
 }
 
-/* ============================================================
-   EPISODE PAGINATION
-============================================================ */
 function renderEpPage(page) {
   var eps = _eps || [];
   var CHUNK = _epsChunk || 50;
@@ -343,7 +318,6 @@ function renderEpPage(page) {
       ? '<img src="' + esc(banner) + '" alt="" loading="lazy">'
       : '<div class="ep-thumb-ph">' + SVG.film + '</div>';
 
-    /* ✅ episode.html বাদ — সরাসরি modal খুলবে */
     html += '<div class="ep-row" onclick="openDownloadModal(\'' + esc(animeSlug) + '\', \'' + esc(epNum) + '\')" data-anime-id="' + esc(animeSlug) + '">';
     html += '<div class="ep-thumb">';
     html += thumbHtml;
@@ -363,9 +337,6 @@ function renderEpPage(page) {
   list.innerHTML = html;
 }
 
-/* ============================================================
-   INTERACTIONS
-============================================================ */
 function toggleSyn() {
   var box = document.getElementById("synBox");
   var btn = document.getElementById("synBtn");
@@ -394,13 +365,10 @@ function goBack() {
   if (document.referrer && document.referrer.indexOf(location.host) !== -1) {
     history.back();
   } else {
-    location.href = "index.html";
+    location.href = "/";
   }
 }
 
-/* ============================================================
-   SIDEBAR
-============================================================ */
 function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebarOverlay');
@@ -416,9 +384,6 @@ function closeSidebar() {
   overlay.classList.remove('open');
 }
 
-/* ============================================================
-   SAVE BUTTON
-============================================================ */
 function wireSaveButton() {
   var btn = document.getElementById("detailSaveBtn");
   if (!btn) return;
@@ -435,14 +400,10 @@ function wireSaveButton() {
   });
 }
 
-/* ============================================================
-   DOWNLOAD MODAL
-============================================================ */
 function openDownloadModal(animeSlug, epNum) {
   var anime = _anime;
   if (!anime) return;
 
-  /* ওই episode-এর download_links বের করুন */
   var eps = anime.episodes_list || [];
   var ep = eps.find(function (e) {
     return String(e.number) === String(epNum);
@@ -450,7 +411,6 @@ function openDownloadModal(animeSlug, epNum) {
 
   var links = (ep && ep.download_links) ? ep.download_links : [];
 
-  /* quality অনুযায়ী সাজান */
   var qualities = ["1080p", "720p", "480p"];
   var linksHtml = "";
 
@@ -486,7 +446,6 @@ function openDownloadModal(animeSlug, epNum) {
       '</div>' +
     '</div>';
 
-  /* পুরোনো modal থাকলে সরান */
   var old = document.getElementById("dlModalOverlay");
   if (old) old.remove();
 
@@ -514,9 +473,6 @@ function recordDownload(animeSlug, epNum) {
   writeHistory(history.slice(0, 50));
 }
 
-/* ============================================================
-   HIDE LOADING
-============================================================ */
 function hideLoading() {
   var s = document.getElementById("loadingScreen");
   if (s) {
@@ -525,9 +481,6 @@ function hideLoading() {
   }
 }
 
-/* ============================================================
-   SHOW ERROR / NOT FOUND
-============================================================ */
 function showNotSelected() {
   var el = document.getElementById("detailContent");
   if (!el) return;
@@ -535,7 +488,8 @@ function showNotSelected() {
     '<div style="text-align:center;padding:80px 20px;color:rgba(237,231,218,0.4)">'
     + '<h2 style="font-family:\'Bebas Neue\',sans-serif;font-size:1.75rem;color:var(--paper);margin-bottom:12px">No Anime Selected</h2>'
     + '<p style="margin-bottom:24px">Please select an anime from the home page.</p>'
-    + '<a href="index.html" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
+    // ✅ .html সরানো হয়েছে
+    + '<a href="/" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
     + '</div>';
   hideLoading();
 }
@@ -546,14 +500,12 @@ function showNotFound() {
     '<div style="text-align:center;padding:80px 20px;color:rgba(237,231,218,0.4)">'
     + '<h2 style="font-family:\'Bebas Neue\',sans-serif;font-size:1.75rem;color:var(--paper);margin-bottom:12px">Anime Not Found</h2>'
     + '<p style="margin-bottom:24px">The anime you are looking for does not exist.</p>'
-    + '<a href="index.html" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
+    // ✅ .html সরানো হয়েছে
+    + '<a href="/" style="color:var(--seal);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;font-size:0.75rem">← Go Home</a>'
     + '</div>';
   hideLoading();
 }
 
-/* ============================================================
-   EXPOSE
-============================================================ */
 window.renderEpPage = renderEpPage;
 window.toggleSyn = toggleSyn;
 window.goBack = goBack;
@@ -566,9 +518,6 @@ window.openDownloadModal = openDownloadModal;
 window.closeDownloadModal = closeDownloadModal;
 window.recordDownload = recordDownload;
 
-/* ============================================================
-   MAIN RENDER FUNCTION
-============================================================ */
 function renderDetailPage(rawList) {
   try {
     var slug = getSlugFromURL();
@@ -595,7 +544,6 @@ function renderDetailPage(rawList) {
 
 window.renderDetailPage = renderDetailPage;
 
-/* ✅ Loader না থাকলেও ২ সেকেন্ড পরে hide loading */
 setTimeout(function () {
   if (!_anime) {
     hideLoading();

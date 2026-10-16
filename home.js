@@ -1,14 +1,10 @@
 /* ============================================================
    home.js — Pure render logic for home page
-   Loader থেকে কল হবে: window.renderHome(list)
 ============================================================ */
 
 var allAnime = [];
 var featuredAnime = [];
 
-/* ============================================================
-   UTILS
-============================================================ */
 function escapeHtml(str) {
   return String(str == null ? '' : str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -30,9 +26,6 @@ function getEpisodeDisplay(anime) {
   return 'E' + String(episodes.length).padStart(2, '0');
 }
 
-/* ============================================================
-   MAP ANIME — normalize fields
-============================================================ */
 function mapBundleAnime(v) {
   if (!v || !v.title) return null;
   var episodesList = Array.isArray(v.episodes_list) ? v.episodes_list : [];
@@ -75,9 +68,6 @@ function mapBundleAnime(v) {
   };
 }
 
-/* ============================================================
-   WATCH HISTORY
-============================================================ */
 var HISTORY_KEY = 'aniDostHistory';
 function readHistory() {
   try {
@@ -107,9 +97,6 @@ function recordHistoryClick(animeId) {
 window.saveWatchProgress = saveWatchProgress;
 window.recordHistoryClick = recordHistoryClick;
 
-/* ============================================================
-   SAVED
-============================================================ */
 var SAVED_KEY = 'aniDostSaved';
 function readSaved() {
   try {
@@ -138,9 +125,6 @@ function findAnime(id) {
   return null;
 }
 
-/* ============================================================
-   BUILD CARD
-============================================================ */
 function buildCard(anime, progress) {
   var poster = escapeHtml(posterOrPlaceholder(anime.poster));
   var epDisplay = getEpisodeDisplay(anime);
@@ -151,7 +135,8 @@ function buildCard(anime, progress) {
   var saved = isSaved(anime.id);
 
   var a = document.createElement('a');
-  a.href = 'details.html?slug=' + encodeURIComponent(anime.id);
+  // ✅ .html সরানো হয়েছে
+  a.href = 'details?slug=' + encodeURIComponent(anime.id);
   a.className = 'card';
   a.dataset.animeId = anime.id;
   a.innerHTML =
@@ -183,9 +168,6 @@ function renderTrack(trackEl, items, limit) {
   return count;
 }
 
-/* ============================================================
-   RENDER ROWS
-============================================================ */
 function sortByLatestEpisode(a, b) {
   var ta = a.latestEpisodeTime || Math.max(a.uploadTime || 0, a.editTime || 0);
   var tb = b.latestEpisodeTime || Math.max(b.uploadTime || 0, b.editTime || 0);
@@ -245,9 +227,6 @@ function renderSavedRow() {
   savedRow.style.display = count ? '' : 'none';
 }
 
-/* ============================================================
-   FILTER COUNTS + GENRE PILLS
-============================================================ */
 function renderFilterCounts() {
   var total = allAnime.length;
   var seriesCount = 0, movieCount = 0;
@@ -283,16 +262,14 @@ function renderFilterCounts() {
   genres.forEach(function (g) {
     var a = document.createElement('a');
     a.className = 'pill';
-    a.href = 'anime.html?genre=' + encodeURIComponent(g);
+    // ✅ .html সরানো হয়েছে
+    a.href = 'anime?genre=' + encodeURIComponent(g);
     a.dataset.genre = g;
     a.innerHTML = escapeHtml(g) + ' <span style="opacity:0.6;font-size:0.75em;margin-left:2px;">' + genreSet[g] + '</span>';
     container.appendChild(a);
   });
 }
 
-/* ============================================================
-   HERO SLIDER
-============================================================ */
 function pickFeatured(list, count) {
   var copy = list.slice();
   for (var i = copy.length - 1; i > 0; i--) {
@@ -366,13 +343,15 @@ function renderHero() {
     if (genreArray.length) {
       html += '<div class="hero-genres">';
       genreArray.forEach(function (g) {
-        html += '<a class="hero-genre-link" href="anime.html?genre=' + encodeURIComponent(g) + '">' + escapeHtml(g) + '</a>';
+        // ✅ .html সরানো হয়েছে
+        html += '<a class="hero-genre-link" href="anime?genre=' + encodeURIComponent(g) + '">' + escapeHtml(g) + '</a>';
       });
       html += '</div>';
     }
 
     html += '<div class="hero-actions">';
-    html += '<a href="details.html?slug=' + encodeURIComponent(slide.id) + '" class="btn-watch" data-anime-id="' + escapeHtml(slide.id) + '">';
+    // ✅ .html সরানো হয়েছে
+    html += '<a href="details?slug=' + encodeURIComponent(slide.id) + '" class="btn-watch" data-anime-id="' + escapeHtml(slide.id) + '">';
     html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg> Watch Now';
     html += '</a>';
     var heroSaved = isSaved(slide.id);
@@ -479,9 +458,6 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'ArrowRight') nextSlide();
 });
 
-/* ============================================================
-   SIDEBAR
-============================================================ */
 function toggleSidebar() {
   var sidebar = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebarOverlay');
@@ -499,9 +475,6 @@ function closeSidebar() {
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
 
-/* ============================================================
-   LIVE SEARCH
-============================================================ */
 var searchInput = document.getElementById('liveSearchInput');
 var searchClear = document.getElementById('searchClear');
 var liveResults = document.getElementById('liveResults');
@@ -559,8 +532,9 @@ function performLiveSearch(query) {
         var epInfo = getEpisodeDisplay(anime);
         var safeId = escapeHtml(anime.id);
         var safeType = escapeHtml(anime.type);
+        // ✅ .html সরানো হয়েছে
         html +=
-          '<a href="details.html?slug=' + encodeURIComponent(anime.id) + '" class="search-result-item" data-anime-id="' + safeId + '">' +
+          '<a href="details?slug=' + encodeURIComponent(anime.id) + '" class="search-result-item" data-anime-id="' + safeId + '">' +
             '<div class="result-poster" style="background-image: url(\'' + poster + '\');"></div>' +
             '<div class="result-info">' +
               '<div class="result-title">' + highlightedTitle + '</div>' +
@@ -611,9 +585,6 @@ document.addEventListener('click', function (e) {
   }
 });
 
-/* ============================================================
-   EVENT DELEGATION
-============================================================ */
 document.addEventListener('click', function (e) {
   var btn = e.target.closest('.save-btn');
   if (!btn) return;
@@ -675,9 +646,6 @@ if (clearHistoryBtn) {
   });
 }
 
-/* ============================================================
-   HIDE LOADING
-============================================================ */
 function hideLoading() {
   var s = document.getElementById('loadingScreen');
   if (s) {
@@ -686,10 +654,6 @@ function hideLoading() {
   }
 }
 
-/* ============================================================
-   ✅ MAIN RENDER FUNCTION
-   Loader থেকে কল হবে — window.renderHome(list)
-============================================================ */
 function renderHome(rawList) {
   try {
     allAnime = (rawList || [])
@@ -728,7 +692,6 @@ function renderHome(rawList) {
 
 window.renderHome = renderHome;
 
-/* ✅ Loader না থাকলেও ২ সেকেন্ড পরে empty state দেখাবে */
 setTimeout(function () {
   if (allAnime.length === 0) {
     var es = document.getElementById('emptyState');
